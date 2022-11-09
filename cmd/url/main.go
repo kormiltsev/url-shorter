@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 )
@@ -14,27 +16,31 @@ const keyServerAddr = "losalhost"
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	hasFirst := r.URL.Query().Has("first")
-	first := r.URL.Query().Get("first")
-	hasSecond := r.URL.Query().Has("second")
-	second := r.URL.Query().Get("second")
+	// read the body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("could not read body: %s\n", err)
+	}
 
-	fmt.Printf("%s: got / request. first(%t)=%s, second(%t)=%s\n",
+	fmt.Printf("%s: got / request. Data: %s\n",
 		ctx.Value(keyServerAddr),
-		hasFirst, first,
-		hasSecond, second)
-	io.WriteString(w, "This is my website!\n")
-}
-func getHello(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+		body)
+	if r.Method == "POST" {
+		io.WriteString(w, randAnswer(string(body))+"\n")
+	} else {
+		io.WriteString(w, "answer!\n")
+	}
 
-	fmt.Printf("%s: got /hello request\n", ctx.Value(keyServerAddr))
-	io.WriteString(w, "Hello, HTTP!\n")
+}
+func getInfo(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	fmt.Printf("%s: got /info request\n", ctx.Value(keyServerAddr))
+	io.WriteString(w, "GET_POST\n")
 }
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", getRoot)
-	mux.HandleFunc("/hello", getHello)
+	mux.HandleFunc("/help", getInfo)
 
 	ctx := context.Background()
 	server := &http.Server{
@@ -47,9 +53,15 @@ func main() {
 	}
 	err := server.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
+		log.Fatal("server closed\n")
 	} else if err != nil {
-		fmt.Printf("error listening for server: %s\n", err)
+		log.Fatal("error listening for server: %s\n", err)
 	}
 
+}
+
+func randAnswer(u string) string {
+	const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	var url_len = 10
+	return GetRandomString(url_len, letters)
 }
