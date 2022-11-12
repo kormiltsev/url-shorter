@@ -14,7 +14,9 @@ import (
 	// "github.com/joho/godotenv"
 )
 
-func StartConnection() *pg.DB {
+var db *pg.DB
+
+func StartConnection() error {
 	godotenv.Load()
 	adr := os.Getenv("ADR")
 	usr := os.Getenv("USR")
@@ -24,7 +26,7 @@ func StartConnection() *pg.DB {
 	if adr == "" || usr == "" || pwd == "" || dbs == "" {
 		log.Printf("Can't find DB specs in .env")
 	}
-	db := pg.Connect(&pg.Options{
+	db = pg.Connect(&pg.Options{
 		Addr:     adr,
 		User:     usr,
 		Password: pwd,
@@ -37,8 +39,19 @@ func StartConnection() *pg.DB {
 		panic(err)
 	}
 	// ==============
-	return db
+	return err
 	//defer db.Close()
+}
+
+func CreateTable() error {
+	var urler Baserow
+	err := db.CreateTable(&urler, &orm.CreateTableOptions{
+		Temp:          false,
+		IfNotExists:   true,
+		FKConstraints: true,
+	})
+	panicIf(err)
+	return err
 }
 
 func panicIf(err error) {
@@ -47,16 +60,10 @@ func panicIf(err error) {
 	}
 }
 
-func RowsQuantity(db *pg.DB, tablename string) (int, error) {
+func RowsQuantity() (int, error) {
 	var qty int
-	_, err := db.Query(&qty, fmt.Sprintf(`SELECT COUNT(surl) FROM %s`, tablename))
+	_, err := db.Query(&qty, `SELECT COUNT(surl) FROM baserows`)
 	return qty, err
-}
-
-func ReturnTablesNames(db *pg.DB) ([]string, error) {
-	var qry []string
-	_, err := db.Query(&qry, fmt.Sprintf(`SELECT table_name FROM information_schema.tables WHERE table_schema NOT IN ('information_schema','pg_catalog')`))
-	return qry, err
 }
 
 func ReturnTablesInfo(db *pg.DB, tablename string) {
@@ -72,19 +79,28 @@ func ReturnTablesInfo(db *pg.DB, tablename string) {
 	fmt.Println(info)
 }
 
-func InsertNewRow(db *pg.DB, newrow *Baserow) {
+func InsertNewRow(newrow *Baserow) {
 	err := db.Insert(newrow)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func CreateTable(db *pg.DB) {
-	var urler Baserow
-	err := db.CreateTable(&urler, &orm.CreateTableOptions{
-		Temp:          false,
-		IfNotExists:   true,
-		FKConstraints: true,
-	})
-	panicIf(err)
+func QueryGetURL(row *Baserow) error {
+	//var row Baserow
+	err := db.Model(row).
+		ColumnExpr("lurl").
+		Where("surl = ?", row.Surl).
+		Select()
+
+		// to check:
+	// item := Model2{
+	// 	Id: 2,
+	// }
+	// err := db.Select(row)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(item)
+	return err
 }

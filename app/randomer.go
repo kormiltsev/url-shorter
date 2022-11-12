@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"math/rand"
@@ -14,9 +14,6 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
-// random optimisation 1.2
-// 1.0 version b := make([]byte, n)
-// b[i] = letters[rand.Int63()%int64(len(letters))]
 func GetRandomString(n int, letters string) string {
 	sb := strings.Builder{}
 	sb.Grow(n)
@@ -37,3 +34,7 @@ func GetRandomString(n int, letters string) string {
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
+
+// faster than simple random:
+// 1.0 version b := make([]byte, n)
+// b[i] = letters[rand.Int63()%int64(len(letters))]
