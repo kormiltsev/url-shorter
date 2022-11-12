@@ -9,6 +9,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+
+	storage "github.com/kormiltsev/url-shorter/db"
+	//db "github.com/kormiltsev/url-shorter/db"
 )
 
 const keyServerAddr = "losalhost"
@@ -39,6 +42,9 @@ func getInfo(w http.ResponseWriter, r *http.Request) {
 }
 func main() {
 	// connect to postgres
+	db := storage.StartConnection()
+	qty, err := storage.CalcQty(db, "google_fits")
+	fmt.Println(qty, err)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", getRoot)
@@ -53,7 +59,7 @@ func main() {
 			return ctx
 		},
 	}
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
 		log.Fatal("server closed\n")
 	} else if err != nil {

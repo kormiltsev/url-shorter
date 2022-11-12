@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -26,7 +27,13 @@ func StartConnection() *pg.DB {
 		Password: pwd,
 		Database: dbs,
 	})
-	return &db
+	return db
 	//defer db.Close()
+}
+
+func CalcQty(db *pg.DB, tablename string) (int, error) {
+	var qty int
+	_, err := db.Query(&qty, fmt.Sprintf(`SELECT COUNT(data_source) FROM %s`, tablename))
+	return qty, err
 
 }
