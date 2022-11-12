@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
-	"net"
 	"net/http"
 
+	//app "github.com/kormiltsev/url-shorter/app"
 	storage "github.com/kormiltsev/url-shorter/db"
 	//db "github.com/kormiltsev/url-shorter/db"
 )
@@ -40,31 +37,34 @@ func getInfo(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s: got /info request\n", ctx.Value(keyServerAddr))
 	io.WriteString(w, "GET_POST\n")
 }
+
 func main() {
 	// connect to postgres
 	db := storage.StartConnection()
-	qty, err := storage.CalcQty(db, "google_fits")
-	fmt.Println(qty, err)
+	storage.CreateTable(db)
+	ass, _ := storage.ReturnTablesNames(db)
+	fmt.Println(ass)
+	storage.ReturnTablesInfo(db, "surl")
+	// ================
+	// mux := http.NewServeMux()
+	// mux.HandleFunc("/", getRoot)
+	// mux.HandleFunc("/help", getInfo)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", getRoot)
-	mux.HandleFunc("/help", getInfo)
-
-	ctx := context.Background()
-	server := &http.Server{
-		Addr:    ":3333",
-		Handler: mux,
-		BaseContext: func(l net.Listener) context.Context {
-			ctx = context.WithValue(ctx, keyServerAddr, l.Addr().String())
-			return ctx
-		},
-	}
-	err = server.ListenAndServe()
-	if errors.Is(err, http.ErrServerClosed) {
-		log.Fatal("server closed\n")
-	} else if err != nil {
-		log.Fatal("error listening for server: %s\n", err)
-	}
+	// ctx := context.Background()
+	// server := &http.Server{
+	// 	Addr:    ":3333",
+	// 	Handler: mux,
+	// 	BaseContext: func(l net.Listener) context.Context {
+	// 		ctx = context.WithValue(ctx, keyServerAddr, l.Addr().String())
+	// 		return ctx
+	// 	},
+	// }
+	// err = server.ListenAndServe()
+	// if errors.Is(err, http.ErrServerClosed) {
+	// 	log.Fatal("server closed\n")
+	// } else if err != nil {
+	// 	log.Fatal("error listening for server: %s\n", err)
+	// }
 
 }
 
@@ -73,4 +73,10 @@ func randAnswer(u string) string {
 	// var url_len = 10
 	//return GetRandomString(url_len, letters)
 	return "result " + u
+}
+
+func panicIf(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
