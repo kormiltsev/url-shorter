@@ -38,6 +38,8 @@ func getInfo(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "GET_POST\n")
 }
 func main() {
+	// connect to postgres
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", getRoot)
 	mux.HandleFunc("/help", getInfo)
@@ -61,7 +63,8 @@ func main() {
 }
 
 func randAnswer(u string) string {
-	const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-	var url_len = 10
-	return GetRandomString(url_len, letters)
+	// const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	// var url_len = 10
+	//return GetRandomString(url_len, letters)
+	return "result " + u
 }
