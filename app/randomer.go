@@ -2,9 +2,16 @@ package app
 
 import (
 	"math/rand"
+	"os"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
+
+var letters string
+var url_len int
 
 const (
 	letterIdxBits = 6
@@ -14,10 +21,10 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
-func GetRandomString(n int, letters string) string {
+func GetRandomString() string {
 	sb := strings.Builder{}
-	sb.Grow(n)
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+	sb.Grow(url_len)
+	for i, cache, remain := url_len-1, src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = src.Int63(), letterIdxMax
 		}
@@ -33,6 +40,15 @@ func GetRandomString(n int, letters string) string {
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	godotenv.Load()
+	letters = os.Getenv("LETTERS")
+	if letters == "" {
+		letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	}
+	url_len, _ = strconv.Atoi(os.Getenv("URLLEN"))
+	if url_len < 1 {
+		url_len = 10
+	}
 }
 
 // faster than simple random:

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,7 +11,6 @@ import (
 
 	app "github.com/kormiltsev/url-shorter/app"
 	storage "github.com/kormiltsev/url-shorter/db"
-	//db "github.com/kormiltsev/url-shorter/db"
 )
 
 const keyServerAddr = "losalhost"
@@ -32,12 +30,12 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	var newrow storage.Baserow
 	if r.Method == "POST" {
 		newrow = storage.Baserow{
+			Surl: app.GetRandomString(),
 			Lurl: string(body),
 		}
-		err := storage.QueryGetURL(&newrow)
+		err := storage.QueryPOSTorSelect(&newrow)
 		if err != nil {
-			newrow.Surl = GetNewSurl(string(body))
-			storage.InsertNewRow(&newrow)
+			log.Printf("%s, POST Query error. %s", err, newrow.Lurl)
 		}
 		io.WriteString(w, newrow.Surl)
 	} else {
@@ -54,22 +52,11 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func getInfo(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	fmt.Printf("%s: got /info request\n", ctx.Value(keyServerAddr))
-	io.WriteString(w, "GET_POST\n")
-}
 
 func main() {
 	// connect to postgres
-	err := storage.StartConnection()
-	if err != nil {
-		log.Printf("%s. Postgres not connected\n", err)
-	}
-	err = storage.CreateTable()
-	if err != nil {
-		log.Printf("%s. Postgres cant create table\n", err)
-	}
+	storage.StartConnection()
+	defer storage.DbClose()
 	qty, err := storage.RowsQuantity()
 	if err != nil {
 		log.Printf("%s. Postgres cant query rows quantity\n", err)
@@ -79,7 +66,6 @@ func main() {
 	// ================
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", getRoot)
-	mux.HandleFunc("/help", getInfo)
 
 	ctx := context.Background()
 	server := &http.Server{
@@ -97,12 +83,6 @@ func main() {
 		log.Fatal("error listening for server: %s\n", err)
 	}
 
-}
-
-func GetNewSurl(u string) string {
-	const letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-	var url_len = 10
-	return app.GetRandomString(url_len, letters)
 }
 
 func panicIf(err error) {

@@ -1,22 +1,17 @@
 package db
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/joho/godotenv"
-	// "github.com/go-pg/pg"
-	//"github.com/go-pg/pg/orm"
-	// "github.com/joho/godotenv"
 )
 
 var db *pg.DB
 
-func StartConnection() error {
+func StartConnection() {
 	godotenv.Load()
 	adr := os.Getenv("ADR")
 	usr := os.Getenv("USR")
@@ -32,18 +27,14 @@ func StartConnection() error {
 		Password: pwd,
 		Database: dbs,
 	})
-	// check connection
-	ctx := context.Background()
-	_, err := db.ExecContext(ctx, "SELECT 1")
-	if err != nil {
-		panic(err)
-	}
-	// ==============
-	return err
-	//defer db.Close()
+	CreateTable()
 }
 
-func CreateTable() error {
+func DbClose() {
+	db.Close()
+}
+
+func CreateTable() {
 	var urler Baserow
 	err := db.CreateTable(&urler, &orm.CreateTableOptions{
 		Temp:          false,
@@ -51,7 +42,7 @@ func CreateTable() error {
 		FKConstraints: true,
 	})
 	panicIf(err)
-	return err
+	//return err
 }
 
 func panicIf(err error) {
@@ -66,41 +57,19 @@ func RowsQuantity() (int, error) {
 	return qty, err
 }
 
-func ReturnTablesInfo(db *pg.DB, tablename string) {
-	var info []struct {
-		ColumnName string
-		DataType   string
-	}
-	_, err := db.Query(&info, fmt.Sprintf(`
-	SELECT column_name, data_type
-	FROM information_schema.columns
-	WHERE table_name = surl`)) //, tablename))
-	panicIf(err)
-	fmt.Println(info)
-}
-
-func InsertNewRow(newrow *Baserow) {
-	err := db.Insert(newrow)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func QueryGetURL(row *Baserow) error {
 	//var row Baserow
-	err := db.Model(row).
+	return db.Model(row).
 		ColumnExpr("lurl").
 		Where("surl = ?", row.Surl).
 		Select()
+}
 
-		// to check:
-	// item := Model2{
-	// 	Id: 2,
-	// }
-	// err := db.Select(row)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(item)
+func QueryPOSTorSelect(row *Baserow) error {
+	_, err := db.Model(row). // true or false
+					ColumnExpr("surl").
+					Where("lurl = ?", row.Lurl).
+					OnConflict("DO NOTHING"). // optional
+					SelectOrInsert()
 	return err
 }
