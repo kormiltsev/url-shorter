@@ -38,7 +38,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 			log.Printf("%s, POST Query error. %s", err, newrow.Lurl)
 		}
 		io.WriteString(w, newrow.Surl)
-	} else {
+	} else if r.Method == "GET" {
 		newrow = storage.Baserow{
 			Surl: string(body),
 		}
@@ -49,6 +49,8 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 		} else {
 			io.WriteString(w, newrow.Lurl)
 		}
+	} else {
+		http.Error(w, "Invalid request method.", 405)
 	}
 
 }
@@ -65,7 +67,7 @@ func main() {
 	}
 	// ================
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", getRoot)
+	mux.HandleFunc("/", getRoot) //.Methods("GET")
 
 	ctx := context.Background()
 	server := &http.Server{
