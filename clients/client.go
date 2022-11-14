@@ -8,9 +8,10 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 )
 
-const Domain = "http://localhost:3333/"
+var Domain = "http://localhost:3333/"
 
 type urlList struct {
 	List      []string
@@ -99,6 +100,18 @@ func PostJson(url string) {
 }
 
 func main() {
+	args := os.Args[1:]
+	if args[0] != "" {
+		Domain = args[0]
+	}
+	if args[1] == "POST" {
+		CloudPOST()
+		return
+	}
+	if args[1] == "GET" {
+		CloudGET()
+		return
+	}
 	ok := "OK"
 	// POST already exitst
 	for i, lurl := range Lurls {
@@ -150,6 +163,34 @@ func Randomer(n int) string {
 		b[i] = letters[rand.Int63()%int64(len(letters))]
 	}
 	return string(b)
+}
+
+func CloudPOST() {
+	var ext = []string{}
+	var surl string
+	for _, lurl := range Lurls {
+		surl = ""
+		surl = Post(lurl)
+		ext = append(ext, surl)
+		//fmt.Printf(surl)
+	}
+	for i, surl := range ext {
+		lurl := ""
+		if lurl = Get(surl); lurl != Lurls[i] {
+			fmt.Printf("error with LURL=%s SURL=%s\n ", lurl, surl)
+		}
+	}
+}
+
+func CloudGET() {
+	for i, surl := range Surls {
+		lurl := ""
+		if surl = Get(surl); lurl != Lurls[i] {
+			//fmt.Printf("error with lurl %s\n", lurl)
+		} else {
+			fmt.Printf(surl)
+		}
+	}
 }
 
 var Surls = []string{

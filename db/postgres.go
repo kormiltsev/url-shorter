@@ -1,7 +1,6 @@
 package db
 
 import (
-	"log"
 	"os"
 
 	"github.com/go-pg/pg"
@@ -19,7 +18,10 @@ func StartConnection() {
 	dbs := os.Getenv("DB")
 
 	if adr == "" || usr == "" || pwd == "" || dbs == "" {
-		log.Printf("Can't find DB specs in .env")
+		adr = "localhost:5432"
+		usr = "postgres"
+		pwd = "root"
+		dbs = "postgres"
 	}
 	db = pg.Connect(&pg.Options{
 		Addr:     adr,

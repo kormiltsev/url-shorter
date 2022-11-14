@@ -1,0 +1,15 @@
+FROM golang:alpine3.16
+
+WORKDIR /Documents/sunduck/url-shorter/
+
+COPY . .
+# Download all the dependencies
+RUN go get -d -v ./...
+
+# Install the package
+RUN go install -v ./...
+
+# This container exposes port 3333 to the outside world
+EXPOSE 3333
+
+CMD [ "go", "run", "main.go" ]
