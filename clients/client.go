@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 )
 
 var Domain = "http://localhost:3333/"
@@ -100,24 +100,26 @@ func PostJson(url string) {
 }
 
 func main() {
-	args := os.Args[1:]
-	if args[0] != "" {
-		Domain = args[0]
-	}
-	if args[1] == "POST" {
+
+	get := flag.Bool("get", false, "a bool")
+	post := flag.Bool("post", false, "a bool")
+	p := flag.String("host", "localhost:3333", "a string")
+	flag.Parse()
+	Domain = *p
+
+	if *post {
 		CloudPOST()
 		return
 	}
-	if args[1] == "GET" {
+	if *get {
 		CloudGET()
 		return
 	}
-	ok := "OK"
-	// POST already exitst
+	// ok := "OK"
+	// POST
 	for i, lurl := range Lurls {
 		if Post(lurl) != Surls[i] {
 			fmt.Printf("error with lurl %s\n", lurl)
-			ok = "NOT OK"
 		}
 	}
 	// ==================
@@ -139,18 +141,18 @@ func main() {
 	//=====
 
 	// GET
-	for i, surl := range Surls {
-		if Get(surl) != Lurls[i] {
-			fmt.Printf("error with surl %s\n", surl)
-			ok = "NOT OK"
-		}
-	}
-	if Get("FakeSurl") != "" {
-		fmt.Printf("error with surl %s\n", "fakeUrl")
-		ok = "NOT OK"
-	}
-	//====
-	fmt.Println(ok)
+	// for i, surl := range Surls {
+	// 	if Get(surl) != Lurls[i] {
+	// 		fmt.Printf("error with surl %s\n", surl)
+	// 		ok = "NOT OK"
+	// 	}
+	// }
+	// if Get("FakeSurl") != "" {
+	// 	fmt.Printf("error with surl %s\n", "fakeUrl")
+	// 	ok = "NOT OK"
+	// }
+	// //====
+	// fmt.Println(ok)
 }
 
 func Randomer(n int) string {
@@ -166,29 +168,32 @@ func Randomer(n int) string {
 }
 
 func CloudPOST() {
+	ok := "We got right original URLs via GET after POST them"
 	var ext = []string{}
 	var surl string
 	for _, lurl := range Lurls {
 		surl = ""
 		surl = Post(lurl)
 		ext = append(ext, surl)
-		//fmt.Printf(surl)
+		//fmt.Println("POST:", lurl, " Short:", surl)
 	}
 	for i, surl := range ext {
 		lurl := ""
 		if lurl = Get(surl); lurl != Lurls[i] {
 			fmt.Printf("error with LURL=%s SURL=%s\n ", lurl, surl)
+			ok = "Some unexpected error"
 		}
 	}
+	fmt.Println(ok)
 }
 
 func CloudGET() {
 	for i, surl := range Surls {
 		lurl := ""
 		if surl = Get(surl); lurl != Lurls[i] {
-			//fmt.Printf("error with lurl %s\n", lurl)
+			fmt.Printf("error with lurl %s\n", lurl)
 		} else {
-			fmt.Printf(surl)
+			fmt.Println("GET:", surl, " Answer:", lurl)
 		}
 	}
 }

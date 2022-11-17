@@ -1,33 +1,18 @@
 package db
 
 import (
-	"os"
-
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
-	"github.com/joho/godotenv"
 )
 
 var db *pg.DB
 
-func StartConnection() {
-	godotenv.Load()
-	adr := os.Getenv("ADR")
-	usr := os.Getenv("USR")
-	pwd := os.Getenv("PASS")
-	dbs := os.Getenv("DB")
-
-	if adr == "" || usr == "" || pwd == "" || dbs == "" {
-		adr = "localhost:5432"
-		usr = "postgres"
-		pwd = "root"
-		dbs = "postgres"
-	}
+func StartConnection(conf [4]string) {
 	db = pg.Connect(&pg.Options{
-		Addr:     adr,
-		User:     usr,
-		Password: pwd,
-		Database: dbs,
+		Addr:     conf[0],
+		User:     conf[1],
+		Password: conf[2],
+		Database: conf[3],
 	})
 	CreateTable()
 }
